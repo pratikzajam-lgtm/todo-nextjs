@@ -78,23 +78,12 @@ export default function Home() {
             className="flex-1 px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
           <button className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600">
-            {edit ? "Edit" : "Submit"}
+            {edit ? "Update" : "Submit"}
           </button>
         </section>
       </form>
 
-      {/* Filter Buttons */}
-      <section className="mb-4 flex gap-2 justify-center">
-        <button className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">
-          All
-        </button>
-        <button className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">
-          Completed
-        </button>
-        <button className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">
-          Pending
-        </button>
-      </section>
+     
 
       <ul className="divide-y divide-gray-300">
         {todos.map((todo) => (
