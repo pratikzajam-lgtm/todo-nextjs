@@ -1,13 +1,15 @@
 "use client";
-import { useState } from "react";
+import { useState, FormEvent } from "react";
 
 export default function Home() {
-  const [todos, setTodos] = useState([]);
+  const [todos, setTodos] = useState<
+    Array<{ id: number; title: string; status: string }>
+  >([]);
   const [title, setTitle] = useState("");
   const [edit, setEdit] = useState(false);
-  const [id, setId] = useState("");
+  const [id, setId] = useState<number | string>("");
 
-  const handleSUbmit = (e) => {
+  const handleSUbmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     if (!edit) {
@@ -27,7 +29,7 @@ export default function Home() {
 
       setTitle("");
     } else {
-      let updatedTodo = todos.map((todo) =>
+      const updatedTodo = todos.map((todo) =>
         todo.id == id ? { ...todo, title: title } : todo,
       );
 
@@ -37,19 +39,19 @@ export default function Home() {
     }
   };
 
-  const handleEdit = (id) => {
+  const handleEdit = (id: number) => {
     setEdit(true);
     setId(id);
 
     const record = todos.find((todo) => todo.id == id);
 
-    console.log(record.title);
-
-    setTitle(record.title);
+    if (record) {
+      setTitle(record.title);
+    }
   };
 
-  const handleDelete = (id) => {
-    let deleteRecord = confirm("Do You Really Want To Delete This Record?");
+  const handleDelete = (id: number) => {
+    const deleteRecord = confirm("Do You Really Want To Delete This Record?");
 
     if (deleteRecord) {
       const updatedTodo = todos.filter((todo) => todo.id != id);
