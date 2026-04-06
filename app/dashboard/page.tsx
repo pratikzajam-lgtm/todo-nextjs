@@ -1,11 +1,7 @@
 "use client";
 import { useState, FormEvent, useEffect, startTransition } from "react";
 import { useRouter } from "next/navigation";
-import {
-  useQuery,
-  useMutation,
-  useQueryClient,
-} from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import { toast } from "react-toastify";
 import { getApiErrorMessage } from "@/app/lib/api";
@@ -16,8 +12,14 @@ import {
   updateTodoApi,
   deleteTodoApi,
 } from "@/app/lib/todos";
+import * as React from "react";
+import Box from "@mui/material/Box";
+import { DataGrid, GridColDef } from "@mui/x-data-grid";
 import type { TodoStatus } from "@/app/lib/todos";
-
+import AddIcon from "@mui/icons-material/Add";
+import EditIcon from "@mui/icons-material/Edit";
+import DeleteIcon from "@mui/icons-material/Delete";
+import { AppDrawer } from "@/app/components/drawer";
 
 const TODOS_QUERY_KEY = ["todos"];
 
@@ -39,9 +41,9 @@ function handleApiAuthError(
 }
 
 export default function DashboardPage() {
+  const [isOpen, setIsOpen] = useState(false);
   const router = useRouter();
   const queryClient = useQueryClient();
-
 
   const [token, setToken] = useState<string | null>(null);
 
@@ -55,12 +57,10 @@ export default function DashboardPage() {
     }
   }, [router]);
 
-  
   const [newTodoText, setNewTodoText] = useState("");
   const [isEditing, setIsEditing] = useState(false);
   const [editingTodoId, setEditingTodoId] = useState<number | null>(null);
 
- 
   const {
     data: todos = [],
     isLoading,
@@ -77,7 +77,6 @@ export default function DashboardPage() {
     handleApiAuthError(loadTodosError, router);
   }, [isError, loadTodosError, router]);
 
- 
   const createTodoMutation = useMutation({
     mutationFn: createTodoApi,
     onSuccess: () => {
@@ -88,7 +87,6 @@ export default function DashboardPage() {
     onError: (error) => handleApiAuthError(error, router),
   });
 
-  
   const updateTodoTextMutation = useMutation({
     mutationFn: (input: { id: number; text: string }) =>
       updateTodoApi(input.id, { text: input.text }),
@@ -102,7 +100,6 @@ export default function DashboardPage() {
     onError: (error) => handleApiAuthError(error, router),
   });
 
- 
   const changeStatusMutation = useMutation({
     mutationFn: (input: { id: number; status: TodoStatus }) =>
       updateTodoApi(input.id, { status: input.status }),
@@ -113,7 +110,6 @@ export default function DashboardPage() {
     onError: (error) => handleApiAuthError(error, router),
   });
 
- 
   const deleteTodoMutation = useMutation({
     mutationFn: deleteTodoApi,
     onSuccess: () => {
@@ -149,6 +145,7 @@ export default function DashboardPage() {
         return;
       }
       createTodoMutation.mutate({ text: trimmed });
+      setIsOpen(false);
       return;
     }
 
@@ -174,10 +171,7 @@ export default function DashboardPage() {
     }
   }
 
-  function handleStatusSelectChange(
-    newStatus: TodoStatus,
-    todoId: number,
-  ) {
+  function handleStatusSelectChange(newStatus: TodoStatus, todoId: number) {
     changeStatusMutation.mutate({ id: todoId, status: newStatus });
   }
 
@@ -185,6 +179,10 @@ export default function DashboardPage() {
     clearSession();
     queryClient.clear();
     router.replace("/auth/login");
+  }
+
+  function handleaddtodo() {
+    setIsOpen(true);
   }
 
   if (!token) {
@@ -197,101 +195,132 @@ export default function DashboardPage() {
 
   const isSavingTodo =
     createTodoMutation.isPending || updateTodoTextMutation.isPending;
-  const isStatusBusy = changeStatusMutation.isPending;
+
+  const columns: GridColDef[] = [
+    { field: "id", headerName: "ID", width: 90 },
+    { field: "text", headerName: "TODO", width: 300 },
+    {
+      field: "status",
+      headerName: "Status",
+      width: 150,
+      sortable: false,
+      renderCell: (params) => (
+        <select
+          value={params.row.status}
+          onChange={(e) =>
+            handleStatusSelectChange(e.target.value, params.row.id)
+          }
+          className="px-2 py-1 border rounded bg-white"
+        >
+          <option value="Pending">Pending</option>
+          <option value="Completed">Completed</option>
+        </select>
+      ),
+    },
+    {
+      field: "edit",
+      headerName: "Edit",
+      width: 80,
+      sortable: false,
+      renderCell: (params) => (
+        <EditIcon
+          onClick={() => startEditingTodo(params.row.id)}
+          className="text-yellow-500 cursor-pointer hover:text-yellow-600"
+        />
+      ),
+    },
+    {
+      field: "delete",
+      headerName: "Delete",
+      width: 80,
+      sortable: false,
+      renderCell: (params) => (
+        <DeleteIcon
+          onClick={() => handleDeleteClick(params.row.id)}
+          className="text-red-500 cursor-pointer hover:text-red-600"
+        />
+      ),
+    },
+  ];
 
   return (
-    <div className="max-w-md mx-auto mt-10 font-sans px-4">
-      <header className="mb-6 text-center relative">
-        <button
-          type="button"
-          onClick={handleLogoutClick}
-          className="absolute right-0 top-0 text-sm text-blue-600 hover:underline"
-        >
-          Log out
-        </button>
-        <h1 className="text-3xl font-bold">Todo Application</h1>
-      </header>
+    <>
+      <AppDrawer
+        open={isOpen}
+        onClose={() => {
+          setIsOpen(false);
+        }}
+        handleFormSubmit={handleFormSubmit}
+        setNewTodoText={setNewTodoText}
+        todo={newTodoText}
+      />
 
-      <form onSubmit={handleFormSubmit}>
-        <section className="mb-4 flex gap-2">
-          <input
-            value={newTodoText}
-            onChange={(event) => setNewTodoText(event.target.value)}
-            type="text"
-            placeholder="Enter new todo"
-            className="flex-1 px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-          <button
-            type="submit"
-            disabled={isSavingTodo}
-            className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 disabled:opacity-60"
-          >
-            {isEditing ? "Update" : "Submit"}
-          </button>
-        </section>
-      </form>
+      <div className="flex flex-col min-h-screen w-full bg-gray-100 p-6">
+        {/* Header */}
+        <header className="mb-6 flex flex-col gap-4 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm shadow-slate-200/50 sm:flex-row sm:items-center sm:justify-between">
+          <div className="text-center sm:text-left">
+            <h1 className="text-3xl font-semibold text-slate-900">Todo Application</h1>
+            <p className="mt-1 text-sm text-slate-500">
+              Manage your tasks, update status, and add new todos quickly.
+            </p>
+          </div>
 
-      {isEditing && (
-        <button
-          type="button"
-          onClick={cancelEditing}
-          className="mb-4 text-sm text-gray-600 hover:text-gray-900"
-        >
-          Cancel edit
-        </button>
-      )}
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <button
+              type="button"
+              onClick={handleaddtodo}
+              disabled={isSavingTodo}
+              className="inline-flex items-center justify-center gap-2 rounded-full bg-blue-600 px-5 py-3 text-sm font-medium text-white shadow-lg shadow-blue-500/20 transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-600"
+            >
+              <AddIcon className="h-5 w-5" />
+              Add Todo
+            </button>
+            <button
+              type="button"
+              onClick={handleLogoutClick}
+              className="inline-flex items-center justify-center rounded-full border border-slate-200 bg-white px-5 py-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+            >
+              Log out
+            </button>
+          </div>
+        </header>
 
-      {isLoading && (
-        <p className="text-center text-gray-600 py-4">Loading…</p>
-      )}
+        {isEditing && (
+          <div className="max-w-4xl mx-auto w-full mb-4 text-left">
+            <button
+              type="button"
+              onClick={cancelEditing}
+              className="text-sm text-gray-600 hover:text-gray-900"
+            >
+              Cancel edit
+            </button>
+          </div>
+        )}
 
-      <ul className="divide-y divide-gray-300">
-        {todos.map((todo) => (
-          <li
-            key={todo.id}
-            className="py-2 flex justify-between items-center gap-2 flex-wrap"
-          >
-            <span className="min-w-0 flex-1">{todo.text}</span>
+        {isLoading && (
+          <p className="text-center text-gray-600 py-4">Loading…</p>
+        )}
 
-            <span>
-              <select
-                value={todo.status}
-                disabled={isStatusBusy}
-                onChange={(event) =>
-                  handleStatusSelectChange(
-                    event.target.value as TodoStatus,
-                    todo.id,
-                  )
-                }
-                className="px-2 py-1 border rounded bg-white"
-              >
-                <option value="Pending">Pending</option>
-                <option value="Completed">Completed</option>
-              </select>
-            </span>
-
-            <span>
-              <button
-                type="button"
-                onClick={() => startEditingTodo(todo.id)}
-                className="px-3 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600 transition-colors"
-              >
-                Edit
-              </button>
-            </span>
-
-            <span>
-              <button
-                type="button"
-                onClick={() => handleDeleteClick(todo.id)}
-                className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
-              >
-                Delete
-              </button>
-            </span>
-          </li>
-        ))}
-      </ul>
-    </div>
+        <div className="flex-1 max-w-6xl mx-auto w-full">
+          <Box sx={{ height: "70vh", width: "100%" }}>
+            <DataGrid
+              rows={todos}
+              columns={columns}
+              pageSizeOptions={[5, 10, 20]}
+              initialState={{
+                pagination: { paginationModel: { pageSize: 5 } },
+              }}
+              disableRowSelectionOnClick
+              sx={{
+                borderRadius: 2,
+                border: 1,
+                borderColor: "gray.300",
+                "& .MuiDataGrid-cell": { outline: "none" },
+              }}
+            />
+          </Box>
+        </div>
+      </div>
+    </>
   );
 }
