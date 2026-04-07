@@ -34,7 +34,7 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
         {/* Header */}
         <Box className="p-4 border-b">
           <Typography variant="h6" fontWeight="bold">
-            Add Todo
+            Update Todo
           </Typography>
         </Box>
 

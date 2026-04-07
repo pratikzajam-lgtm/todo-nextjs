@@ -93,6 +93,7 @@ export default function DashboardPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: TODOS_QUERY_KEY });
       toast.success("Todo updated successfully");
+      setIsOpen(false);
       setNewTodoText("");
       setIsEditing(false);
       setEditingTodoId(null);
@@ -130,6 +131,7 @@ export default function DashboardPage() {
     if (todoToEdit === undefined) return;
 
     setIsEditing(true);
+    setIsOpen(true);
     setEditingTodoId(todoId);
     setNewTodoText(todoToEdit.text);
   }
@@ -259,7 +261,9 @@ export default function DashboardPage() {
         {/* Header */}
         <header className="mb-6 flex flex-col gap-4 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm shadow-slate-200/50 sm:flex-row sm:items-center sm:justify-between">
           <div className="text-center sm:text-left">
-            <h1 className="text-3xl font-semibold text-slate-900">Todo Application</h1>
+            <h1 className="text-3xl font-semibold text-slate-900">
+              Todo Application
+            </h1>
             <p className="mt-1 text-sm text-slate-500">
               Manage your tasks, update status, and add new todos quickly.
             </p>
@@ -284,18 +288,6 @@ export default function DashboardPage() {
             </button>
           </div>
         </header>
-
-        {isEditing && (
-          <div className="max-w-4xl mx-auto w-full mb-4 text-left">
-            <button
-              type="button"
-              onClick={cancelEditing}
-              className="text-sm text-gray-600 hover:text-gray-900"
-            >
-              Cancel edit
-            </button>
-          </div>
-        )}
 
         {isLoading && (
           <p className="text-center text-gray-600 py-4">Loading…</p>
