@@ -120,11 +120,7 @@ export default function DashboardPage() {
     onError: (error) => handleApiAuthError(error, router),
   });
 
-  function cancelEditing() {
-    setIsEditing(false);
-    setEditingTodoId(null);
-    setNewTodoText("");
-  }
+
 
   function startEditingTodo(todoId: number) {
     const todoToEdit = todos.find((todo) => todo.id === todoId);
@@ -210,7 +206,7 @@ export default function DashboardPage() {
         <select
           value={params.row.status}
           onChange={(e) =>
-            handleStatusSelectChange(e.target.value, params.row.id)
+            handleStatusSelectChange(e.target.value as TodoStatus, params.row.id)
           }
           className="px-2 py-1 border rounded bg-white"
         >
