@@ -14,7 +14,6 @@ import {
   TodoStatus,
 } from "@/app/lib/todos";
 import * as React from "react";
-import dialog from "../components/dialog";
 import { DataGrid } from "@mui/x-data-grid";
 import { Box } from "@mui/material";
 import { AppDrawer } from "../components/drawer";
@@ -23,6 +22,7 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import AddIcon from "@mui/icons-material/Add";
 import { GridColDef } from "@mui/x-data-grid";
 import DraggableDialog from "../components/dialog";
+import { Console } from "console";
 
 const TODOS_QUERY_KEY = ["todos"];
 
@@ -100,6 +100,7 @@ export default function DashboardPage() {
       toast.success("Todo updated successfully");
       setIsOpen(false);
       setNewTodoText("");
+      console.log("edit")
       setIsEditing(false);
       setEditingTodoId(null);
     },
@@ -136,10 +137,35 @@ export default function DashboardPage() {
     setNewTodoText(todoToEdit.text);
   }
 
+  function isContainSpecialChar(word:string) {
+    const charCode = word.charCodeAt(0);
+
+    if (
+      (charCode >= 33 && charCode <= 47) ||
+      (charCode >= 58 && charCode <= 64) ||
+      (charCode >= 91 && charCode <= 96) ||
+      (charCode >= 91 && charCode <= 96)
+    ) {
+      return true;
+    }
+
+    return false;
+  }
+
   function handleFormSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     const trimmed = newTodoText.trim();
+
+    if (trimmed.length < 3) {
+      toast.error("Todo text must be at least 3 characters long");
+      return;
+    }
+
+    if (isContainSpecialChar(trimmed)) {
+      toast.error("Todo text contains special characters");
+      return;
+    }
 
     if (!isEditing) {
       if (trimmed === "") {
@@ -164,8 +190,10 @@ export default function DashboardPage() {
     });
   }
 
+
+
   function handleDeleteClick(todoId: number) {
-    setIsOpen(false)
+    setIsOpen(false);
     setModalOpen(true);
     setDeleteId(todoId);
   }

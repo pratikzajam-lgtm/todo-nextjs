@@ -23,18 +23,17 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
   setNewTodoText,
   todo,
 }) => {
+  
+  
 
 
   return (
     <Drawer anchor="right" open={open} onClose={onClose}>
-      <Box
-        sx={{ width: 320 }}
-        className="h-full flex flex-col justify-between"
-      >
+      <Box sx={{ width: 320 }} className="h-full flex flex-col justify-between">
         {/* Header */}
         <Box className="p-4 border-b">
           <Typography variant="h6" fontWeight="bold">
-            Update Todo
+           Todo
           </Typography>
         </Box>
 
@@ -52,11 +51,7 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
             onChange={(e) => setNewTodoText(e.target.value)}
           />
 
-          <Button
-            type="submit"
-            variant="contained"
-            fullWidth
-          >
+          <Button type="submit" variant="contained" fullWidth>
             Submit
           </Button>
         </Box>
