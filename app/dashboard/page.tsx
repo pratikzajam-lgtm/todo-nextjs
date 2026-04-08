@@ -11,15 +11,18 @@ import {
   createTodoApi,
   updateTodoApi,
   deleteTodoApi,
+  TodoStatus,
 } from "@/app/lib/todos";
 import * as React from "react";
-import Box from "@mui/material/Box";
-import { DataGrid, GridColDef } from "@mui/x-data-grid";
-import type { TodoStatus } from "@/app/lib/todos";
-import AddIcon from "@mui/icons-material/Add";
+import dialog from "../components/dialog";
+import { DataGrid } from "@mui/x-data-grid";
+import { Box } from "@mui/material";
+import { AppDrawer } from "../components/drawer";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
-import { AppDrawer } from "@/app/components/drawer";
+import AddIcon from "@mui/icons-material/Add";
+import { GridColDef } from "@mui/x-data-grid";
+import DraggableDialog from "../components/dialog";
 
 const TODOS_QUERY_KEY = ["todos"];
 
@@ -44,6 +47,8 @@ export default function DashboardPage() {
   const [isOpen, setIsOpen] = useState(false);
   const router = useRouter();
   const queryClient = useQueryClient();
+  const [isModalOpen, setModalOpen] = useState(false);
+  const [DeleteId, setDeleteId] = useState<number | null>(null);
 
   const [token, setToken] = useState<string | null>(null);
 
@@ -114,13 +119,12 @@ export default function DashboardPage() {
   const deleteTodoMutation = useMutation({
     mutationFn: deleteTodoApi,
     onSuccess: () => {
+      setModalOpen(false);
       queryClient.invalidateQueries({ queryKey: TODOS_QUERY_KEY });
       toast.success("Todo deleted successfully");
     },
     onError: (error) => handleApiAuthError(error, router),
   });
-
-
 
   function startEditingTodo(todoId: number) {
     const todoToEdit = todos.find((todo) => todo.id === todoId);
@@ -161,12 +165,9 @@ export default function DashboardPage() {
   }
 
   function handleDeleteClick(todoId: number) {
-    const userConfirmed = window.confirm(
-      "Do you really want to delete this todo?",
-    );
-    if (userConfirmed) {
-      deleteTodoMutation.mutate(todoId);
-    }
+    setIsOpen(false)
+    setModalOpen(true);
+    setDeleteId(todoId);
   }
 
   function handleStatusSelectChange(newStatus: TodoStatus, todoId: number) {
@@ -206,7 +207,10 @@ export default function DashboardPage() {
         <select
           value={params.row.status}
           onChange={(e) =>
-            handleStatusSelectChange(e.target.value as TodoStatus, params.row.id)
+            handleStatusSelectChange(
+              e.target.value as TodoStatus,
+              params.row.id,
+            )
           }
           className="px-2 py-1 border rounded bg-white"
         >
@@ -252,6 +256,23 @@ export default function DashboardPage() {
         setNewTodoText={setNewTodoText}
         todo={newTodoText}
       />
+
+      <>
+        <DraggableDialog
+          open={isModalOpen}
+          title="Confirm Deletion"
+          description="Are you sure you want to delete this todo?"
+          onClose={() => {
+            setModalOpen(false);
+            setDeleteId(null);
+          }}
+          onConfirm={() => {
+            if (DeleteId !== null) {
+              deleteTodoMutation.mutate(DeleteId);
+            }
+          }}
+        />
+      </>
 
       <div className="flex flex-col min-h-screen w-full bg-gray-100 p-6">
         {/* Header */}
