@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import {
   Drawer,
   Box,
@@ -24,14 +24,11 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
   todo,
 }) => {
   
-  
-
-
   return (
     <Drawer anchor="right" open={open} onClose={onClose}>
-      <Box sx={{ width: 320 }} className="h-full flex flex-col justify-between">
+      <Box sx={{ width: 320, height: "100%", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
         {/* Header */}
-        <Box className="p-4 border-b">
+        <Box sx={{ p: 2, borderBottom: 1, borderColor: "divider" }}>
           <Typography variant="h6" fontWeight="bold">
            Todo
           </Typography>
@@ -41,7 +38,7 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
         <Box
           component="form"
           onSubmit={handleFormSubmit}
-          className="flex-1 flex flex-col gap-4 p-4"
+          sx={{ flex: 1, display: "flex", flexDirection: "column", gap: 2, p: 2 }}
         >
           <TextField
             label="Todo"
@@ -59,7 +56,7 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
         <Divider />
 
         {/* Footer */}
-        <Box className="p-4">
+        <Box sx={{ p: 2 }}>
           <Button
             variant="outlined"
             color="secondary"

@@ -21,6 +21,12 @@ type TodoMutationResponse = {
   data: Todo;
 };
 
+type SearchMutationResponse = {
+  success: boolean;
+  message: string;
+  data: Todo;
+};
+
 type DeleteTodoResponse = {
   success: boolean;
   message: string;
@@ -46,5 +52,10 @@ export async function updateTodoApi(
 
 export async function deleteTodoApi(id: number) {
   const { data } = await api.delete<DeleteTodoResponse>(`/todos/${id}`);
+  return data;
+}
+
+export async function search(query: string) {
+  const { data } = await api.get<SearchMutationResponse>(`/todos/search/${query}`);
   return data;
 }

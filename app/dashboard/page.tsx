@@ -15,16 +15,94 @@ import {
 } from "@/app/lib/todos";
 import * as React from "react";
 import { DataGrid } from "@mui/x-data-grid";
-import { Box } from "@mui/material";
+import {
+  Box,
+  Typography,
+  Button,
+  Paper,
+  Select,
+  MenuItem,
+  CircularProgress,
+} from "@mui/material";
+import { styled } from "@mui/material/styles";
+import Switch from "@mui/material/Switch";
+import { ThemeContext } from "@/app/context/ThemeContext";
 import { AppDrawer } from "../components/drawer";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import AddIcon from "@mui/icons-material/Add";
 import { GridColDef } from "@mui/x-data-grid";
 import DraggableDialog from "../components/dialog";
-import { Console } from "console";
+import SearchBar from "../components/Searchbar";
 
 const TODOS_QUERY_KEY = ["todos"];
+
+function handleSearch(query: string) {
+  // Implement search functionality here
+  console.log("Search query:", query);
+}
+
+const MaterialUISwitch = styled(Switch)(({ theme }) => ({
+  width: 62,
+  height: 34,
+  padding: 7,
+  "& .MuiSwitch-switchBase": {
+    margin: 1,
+    padding: 0,
+    transform: "translateX(6px)",
+    "&.Mui-checked": {
+      color: "#fff",
+      transform: "translateX(22px)",
+      "& .MuiSwitch-thumb:before": {
+        backgroundImage: `url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" height="20" width="20" viewBox="0 0 20 20"><path fill="${encodeURIComponent(
+          "#fff",
+        )}" d="M4.2 2.5l-.7 1.8-1.8.7 1.8.7.7 1.8.6-1.8L6.7 5l-1.9-.7-.6-1.8zm15 8.3a6.7 6.7 0 11-6.6-6.6 5.8 5.8 0 006.6 6.6z"/></svg>')`,
+      },
+      "& + .MuiSwitch-track": {
+        opacity: 1,
+        backgroundColor: "#aab4be",
+        ...(theme.applyStyles
+          ? theme.applyStyles("dark", {
+              backgroundColor: "#8796A5",
+            })
+          : {}),
+      },
+    },
+  },
+  "& .MuiSwitch-thumb": {
+    backgroundColor: "#001e3c",
+    width: 32,
+    height: 32,
+    "&::before": {
+      content: "''",
+      position: "absolute",
+      width: "100%",
+      height: "100%",
+      left: 0,
+      top: 0,
+      backgroundRepeat: "no-repeat",
+      backgroundPosition: "center",
+      backgroundImage: `url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" height="20" width="20" viewBox="0 0 20 20"><path fill="${encodeURIComponent(
+        "#fff",
+      )}" d="M9.305 1.667V3.75h1.389V1.667h-1.39zm-4.707 1.95l-.982.982L5.09 6.072l.982-.982-1.473-1.473zm10.802 0L13.927 5.09l.982.982 1.473-1.473-.982-.982zM10 5.139a4.872 4.872 0 00-4.862 4.86A4.872 4.872 0 0010 14.862 4.872 4.872 0 0014.86 10 4.872 4.872 0 0010 5.139zm0 1.389A3.462 3.462 0 0113.471 10a3.462 3.462 0 01-3.473 3.472A3.462 3.462 0 016.527 10 3.462 3.462 0 0110 6.528zM1.665 9.305v1.39h2.083v-1.39H1.666zm14.583 0v1.39h2.084v-1.39h-2.084zM5.09 13.928L3.616 15.4l.982.982 1.473-1.473-.982-.982zm9.82 0l-.982.982 1.473 1.473.982-.982-1.473-1.473zM9.305 16.25v2.083h1.389V16.25h-1.39z"/></svg>')`,
+    },
+    ...(theme.applyStyles
+      ? theme.applyStyles("dark", {
+          backgroundColor: "#003892",
+        })
+      : {}),
+  },
+  "& .MuiSwitch-track": {
+    opacity: 1,
+    backgroundColor: "#aab4be",
+    borderRadius: 20 / 2,
+    ...(theme.applyStyles
+      ? theme.applyStyles("dark", {
+          backgroundColor: "#8796A5",
+        })
+      : {}),
+  },
+}));
 
 function handleApiAuthError(
   error: unknown,
@@ -49,6 +127,9 @@ export default function DashboardPage() {
   const queryClient = useQueryClient();
   const [isModalOpen, setModalOpen] = useState(false);
   const [DeleteId, setDeleteId] = useState<number | null>(null);
+
+  const { theme, toggleTheme } = React.useContext(ThemeContext);
+  const isDarkMode = theme.palette.mode === "dark";
 
   const [token, setToken] = useState<string | null>(null);
 
@@ -100,7 +181,7 @@ export default function DashboardPage() {
       toast.success("Todo updated successfully");
       setIsOpen(false);
       setNewTodoText("");
-      console.log("edit")
+      console.log("edit");
       setIsEditing(false);
       setEditingTodoId(null);
     },
@@ -137,7 +218,7 @@ export default function DashboardPage() {
     setNewTodoText(todoToEdit.text);
   }
 
-  function isContainSpecialChar(word:string) {
+  function isContainSpecialChar(word: string) {
     const charCode = word.charCodeAt(0);
 
     if (
@@ -190,8 +271,6 @@ export default function DashboardPage() {
     });
   }
 
-
-
   function handleDeleteClick(todoId: number) {
     setIsOpen(false);
     setModalOpen(true);
@@ -214,9 +293,17 @@ export default function DashboardPage() {
 
   if (!token) {
     return (
-      <div className="max-w-md mx-auto mt-10 text-center text-gray-600">
-        Checking login…
-      </div>
+      <Box
+        sx={{
+          maxWidth: "sm",
+          mx: "auto",
+          mt: 10,
+          textAlign: "center",
+          color: "text.secondary",
+        }}
+      >
+        <Typography>Checking login…</Typography>
+      </Box>
     );
   }
 
@@ -232,7 +319,7 @@ export default function DashboardPage() {
       width: 150,
       sortable: false,
       renderCell: (params) => (
-        <select
+        <Select
           value={params.row.status}
           onChange={(e) =>
             handleStatusSelectChange(
@@ -240,11 +327,12 @@ export default function DashboardPage() {
               params.row.id,
             )
           }
-          className="px-2 py-1 border rounded bg-white"
+          size="small"
+          sx={{ minWidth: 120, bgcolor: "background.paper" }}
         >
-          <option value="Pending">Pending</option>
-          <option value="Completed">Completed</option>
-        </select>
+          <MenuItem value="Pending">Pending</MenuItem>
+          <MenuItem value="Completed">Completed</MenuItem>
+        </Select>
       ),
     },
     {
@@ -302,43 +390,101 @@ export default function DashboardPage() {
         />
       </>
 
-      <div className="flex flex-col min-h-screen w-full bg-gray-100 p-6">
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          minHeight: "100vh",
+          width: "100%",
+          bgcolor: "grey.100",
+          p: 3,
+        }}
+      >
         {/* Header */}
-        <header className="mb-6 flex flex-col gap-4 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm shadow-slate-200/50 sm:flex-row sm:items-center sm:justify-between">
-          <div className="text-center sm:text-left">
-            <h1 className="text-3xl font-semibold text-slate-900">
-              Todo Application
-            </h1>
-            <p className="mt-1 text-sm text-slate-500">
-              Manage your tasks, update status, and add new todos quickly.
-            </p>
-          </div>
 
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-            <button
-              type="button"
+        <Paper
+          elevation={0}
+          sx={{
+            mb: 3,
+            display: "flex",
+            flexDirection: { xs: "column", sm: "row" },
+            gap: 2,
+            borderRadius: 4,
+            border: 1,
+            borderColor: "grey.200",
+            bgcolor: "background.paper",
+            p: 3,
+            alignItems: { xs: "center", sm: "center" },
+            justifyContent: "space-between",
+          }}
+        >
+          <Box sx={{ textAlign: { xs: "center", sm: "left" } }}>
+            <Typography
+              variant="h5"
+              component="h1"
+              fontWeight="bold"
+              color="text.primary"
+            >
+              Todo Application
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+              Manage your tasks, update status, and add new todos quickly.
+            </Typography>
+          </Box>
+
+          <SearchBar
+            placeholder="Search"
+            size="small"
+            sx={{
+              width: 250,
+              "& .MuiInputBase-root": {
+                height: 32,
+              },
+              "& .MuiInputBase-input": {
+                padding: "4px 8px",
+                fontSize: "0.8rem",
+              },
+            }}
+            onSearch={handleSearch}
+          />
+
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: { xs: "column", sm: "row" },
+              gap: 1.5,
+              alignItems: "center",
+            }}
+          >
+            <MaterialUISwitch checked={isDarkMode} onChange={toggleTheme} />
+            <Button
+              variant="contained"
+              color="primary"
               onClick={handleaddtodo}
               disabled={isSavingTodo}
-              className="inline-flex items-center justify-center gap-2 rounded-full bg-blue-600 px-5 py-3 text-sm font-medium text-white shadow-lg shadow-blue-500/20 transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-600"
+              startIcon={<AddIcon />}
+              sx={{ borderRadius: 10, px: 3, py: 1 }}
             >
-              <AddIcon className="h-5 w-5" />
               Add Todo
-            </button>
-            <button
-              type="button"
+            </Button>
+            <Button
+              variant="outlined"
+              color="inherit"
               onClick={handleLogoutClick}
-              className="inline-flex items-center justify-center rounded-full border border-slate-200 bg-white px-5 py-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+              sx={{ borderRadius: 10, px: 3, py: 1, color: "text.secondary" }}
             >
               Log out
-            </button>
-          </div>
-        </header>
+            </Button>
+          </Box>
+        </Paper>
 
         {isLoading && (
-          <p className="text-center text-gray-600 py-4">Loading…</p>
+          <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
+            <CircularProgress />
+          </Box>
         )}
 
-        <div className="flex-1 max-w-6xl mx-auto w-full">
+        <Box sx={{ flex: 1, maxWidth: "xl", mx: "auto", width: "100%" }}>
           <Box sx={{ height: "70vh", width: "100%" }}>
             <DataGrid
               rows={todos}
@@ -351,13 +497,14 @@ export default function DashboardPage() {
               sx={{
                 borderRadius: 2,
                 border: 1,
-                borderColor: "gray.300",
+                borderColor: "grey.300",
+                bgcolor: "background.paper",
                 "& .MuiDataGrid-cell": { outline: "none" },
               }}
             />
           </Box>
-        </div>
-      </div>
+        </Box>
+      </Box>
     </>
   );
 }

@@ -5,6 +5,8 @@ import { ReactNode } from 'react'
 import { useState } from 'react'
 import { ToastContainer } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
+import { ThemeContextProvider, ThemeContext } from "./context/ThemeContext"; 
+import { ThemeProvider } from "@mui/material/styles";
 
 export default function Providers({ children }: { children: ReactNode }) {
  
@@ -12,8 +14,16 @@ export default function Providers({ children }: { children: ReactNode }) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <ToastContainer aria-label="Toast notifications" />
-      {children}
+      <ThemeContextProvider>
+        <ThemeContext.Consumer>
+          {({ theme }) => (
+            <ThemeProvider theme={theme}>
+              <ToastContainer aria-label="Toast notifications" />
+              {children}
+            </ThemeProvider>
+          )}
+        </ThemeContext.Consumer>
+      </ThemeContextProvider>
     </QueryClientProvider>
   )
 }

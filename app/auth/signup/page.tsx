@@ -5,6 +5,14 @@ import { SignupApi } from "@/app/lib/auth";
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
 import { getApiErrorMessage } from "@/app/lib/api";
+import {
+  Container,
+  Box,
+  Typography,
+  TextField,
+  Button,
+  Paper,
+} from "@mui/material";
 
 const Signup = () => {
   const router = useRouter();
@@ -43,103 +51,92 @@ const Signup = () => {
   };
 
   return (
-    <div className="flex justify-center items-center min-h-screen bg-gray-100">
-      <div className="w-full max-w-md bg-white p-8 rounded-lg shadow-md">
-        <h2 className="text-2xl font-bold text-center mb-6">Signup</h2>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label
-              htmlFor="name"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              Name
-            </label>
-            <input
-              required
-              value={name}
-              onChange={(e) => {
-                setname(e.target.value);
-              }}
-              type="text"
-              id="name"
-              name="name"
-              placeholder="Enter your name"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-
-          <div>
-            <label
-              htmlFor="email"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              Email
-            </label>
-            <input
-              value={email}
-              required
-              onChange={(e) => {
-                setemail(e.target.value);
-              }}
-              type="email"
-              id="email"
-              name="email"
-              placeholder="Enter your email"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-
-          <div>
-            <label
-              htmlFor="password"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              Password
-            </label>
-            <input
-              required
-              value={password}
-              onChange={(e) => {
-                setpassword(e.target.value);
-              }}
-              type="password"
-              id="password"
-              name="password"
-              placeholder="Enter your password"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-
-          <div>
-            <label
-              htmlFor="confirmPassword"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              Confirm Password
-            </label>
-            <input
-              required
-              value={confirmPassword}
-              onChange={(e) => {
-                setConfirmPassword(e.target.value);
-              }}
-              type="password"
-              id="confirmPassword"
-              name="confirmPassword"
-              placeholder="Confirm your password"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-
-          <button
-            type="submit"
-            className="w-full py-2 px-4 bg-blue-600 text-white font-semibold rounded-md hover:bg-blue-700 transition-colors"
+    <Box
+      sx={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        minHeight: "100vh",
+        bgcolor: "grey.100",
+      }}
+    >
+      <Container maxWidth="xs">
+        <Paper
+          elevation={3}
+          sx={{
+            p: 4,
+            display: "flex",
+            flexDirection: "column",
+            gap: 3,
+            borderRadius: 2,
+          }}
+        >
+          <Typography variant="h5" component="h2" fontWeight="bold" align="center">
+            Signup
+          </Typography>
+          <Box
+            component="form"
+            onSubmit={handleSubmit}
+            sx={{ display: "flex", flexDirection: "column", gap: 2 }}
           >
-            Sign Up
-          </button>
-        </form>
-      </div>
-    </div>
+            <TextField
+              required
+              fullWidth
+              id="name"
+              label="Name"
+              name="name"
+              type="text"
+              value={name}
+              onChange={(e) => setname(e.target.value)}
+              variant="outlined"
+            />
+            <TextField
+              required
+              fullWidth
+              id="email"
+              label="Email"
+              name="email"
+              type="email"
+              value={email}
+              onChange={(e) => setemail(e.target.value)}
+              variant="outlined"
+            />
+            <TextField
+              required
+              fullWidth
+              id="password"
+              label="Password"
+              name="password"
+              type="password"
+              value={password}
+              onChange={(e) => setpassword(e.target.value)}
+              variant="outlined"
+            />
+            <TextField
+              required
+              fullWidth
+              id="confirmPassword"
+              label="Confirm Password"
+              name="confirmPassword"
+              type="password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              variant="outlined"
+            />
+            <Button
+              type="submit"
+              fullWidth
+              variant="contained"
+              color="primary"
+              size="large"
+              sx={{ mt: 1, fontWeight: "bold" }}
+            >
+              Sign Up
+            </Button>
+          </Box>
+        </Paper>
+      </Container>
+    </Box>
   );
 };
 
