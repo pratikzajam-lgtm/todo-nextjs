@@ -22,10 +22,9 @@ import {
   Paper,
   Select,
   MenuItem,
-  CircularProgress,
 } from "@mui/material";
 import { styled } from "@mui/material/styles";
-import Switch from "@mui/material/Switch";
+
 import { ThemeContext } from "@/app/context/ThemeContext";
 import { AppDrawer } from "../components/drawer";
 import EditIcon from "@mui/icons-material/Edit";
@@ -35,76 +34,10 @@ import { GridColDef } from "@mui/x-data-grid";
 import DraggableDialog from "../components/dialog";
 import SearchBar from "../components/Searchbar";
 
-const TODOS_QUERY_KEY = ["todos"];
+import { MaterialUISwitch } from "../components/switch";
+import ArcStack from "../components/spinner";
 
-function handleSearch(query: string) {
-  // Implement search functionality here
-  console.log("Search query:", query);
-}
-
-const MaterialUISwitch = styled(Switch)(({ theme }) => ({
-  width: 62,
-  height: 34,
-  padding: 7,
-  "& .MuiSwitch-switchBase": {
-    margin: 1,
-    padding: 0,
-    transform: "translateX(6px)",
-    "&.Mui-checked": {
-      color: "#fff",
-      transform: "translateX(22px)",
-      "& .MuiSwitch-thumb:before": {
-        backgroundImage: `url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" height="20" width="20" viewBox="0 0 20 20"><path fill="${encodeURIComponent(
-          "#fff",
-        )}" d="M4.2 2.5l-.7 1.8-1.8.7 1.8.7.7 1.8.6-1.8L6.7 5l-1.9-.7-.6-1.8zm15 8.3a6.7 6.7 0 11-6.6-6.6 5.8 5.8 0 006.6 6.6z"/></svg>')`,
-      },
-      "& + .MuiSwitch-track": {
-        opacity: 1,
-        backgroundColor: "#aab4be",
-        ...(theme.applyStyles
-          ? theme.applyStyles("dark", {
-              backgroundColor: "#8796A5",
-            })
-          : {}),
-      },
-    },
-  },
-  "& .MuiSwitch-thumb": {
-    backgroundColor: "#001e3c",
-    width: 32,
-    height: 32,
-    "&::before": {
-      content: "''",
-      position: "absolute",
-      width: "100%",
-      height: "100%",
-      left: 0,
-      top: 0,
-      backgroundRepeat: "no-repeat",
-      backgroundPosition: "center",
-      backgroundImage: `url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" height="20" width="20" viewBox="0 0 20 20"><path fill="${encodeURIComponent(
-        "#fff",
-      )}" d="M9.305 1.667V3.75h1.389V1.667h-1.39zm-4.707 1.95l-.982.982L5.09 6.072l.982-.982-1.473-1.473zm10.802 0L13.927 5.09l.982.982 1.473-1.473-.982-.982zM10 5.139a4.872 4.872 0 00-4.862 4.86A4.872 4.872 0 0010 14.862 4.872 4.872 0 0014.86 10 4.872 4.872 0 0010 5.139zm0 1.389A3.462 3.462 0 0113.471 10a3.462 3.462 0 01-3.473 3.472A3.462 3.462 0 016.527 10 3.462 3.462 0 0110 6.528zM1.665 9.305v1.39h2.083v-1.39H1.666zm14.583 0v1.39h2.084v-1.39h-2.084zM5.09 13.928L3.616 15.4l.982.982 1.473-1.473-.982-.982zm9.82 0l-.982.982 1.473 1.473.982-.982-1.473-1.473zM9.305 16.25v2.083h1.389V16.25h-1.39z"/></svg>')`,
-    },
-    ...(theme.applyStyles
-      ? theme.applyStyles("dark", {
-          backgroundColor: "#003892",
-        })
-      : {}),
-  },
-  "& .MuiSwitch-track": {
-    opacity: 1,
-    backgroundColor: "#aab4be",
-    borderRadius: 20 / 2,
-    ...(theme.applyStyles
-      ? theme.applyStyles("dark", {
-          backgroundColor: "#8796A5",
-        })
-      : {}),
-  },
-}));
-
-function handleApiAuthError(
+const TODOS_QUERY_KEY = ["todos"];function handleApiAuthError(
   error: unknown,
   router: { replace: (href: string) => void },
 ) {
@@ -147,16 +80,33 @@ export default function DashboardPage() {
   const [isEditing, setIsEditing] = useState(false);
   const [editingTodoId, setEditingTodoId] = useState<number | null>(null);
 
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sortBy, setSortBy] = useState<string | undefined>(undefined);
+  const [order, setOrder] = useState<"asc" | "desc" | undefined>(undefined);
+  const [statusFilter, setStatusFilter] = useState<string | undefined>(undefined);
+
   const {
     data: todos = [],
     isLoading,
     isError,
     error: loadTodosError,
   } = useQuery({
-    queryKey: TODOS_QUERY_KEY,
-    queryFn: fetchTodos,
+    queryKey: [...TODOS_QUERY_KEY, searchQuery, sortBy, order, statusFilter],
+    queryFn: () => fetchTodos({
+      search: searchQuery || undefined,
+      sortBy,
+      order,
+      status: statusFilter,
+    }),
     enabled: token !== null && token !== "",
   });
+
+  function handleSearch(query: string) {
+    setSearchQuery(query);
+  }
+
+
+
 
   useEffect(() => {
     if (!isError || loadTodosError === undefined) return;
@@ -187,6 +137,8 @@ export default function DashboardPage() {
     },
     onError: (error) => handleApiAuthError(error, router),
   });
+
+
 
   const changeStatusMutation = useMutation({
     mutationFn: (input: { id: number; status: TodoStatus }) =>
@@ -432,21 +384,34 @@ export default function DashboardPage() {
             </Typography>
           </Box>
 
-          <SearchBar
-            placeholder="Search"
-            size="small"
-            sx={{
-              width: 250,
-              "& .MuiInputBase-root": {
-                height: 32,
-              },
-              "& .MuiInputBase-input": {
-                padding: "4px 8px",
-                fontSize: "0.8rem",
-              },
-            }}
-            onSearch={handleSearch}
-          />
+          <Box sx={{ display: "flex", gap: 2, alignItems: "center", flexDirection: { xs: "column", sm: "row" } }}>
+            <SearchBar
+              placeholder="Search"
+              size="small"
+              sx={{
+                width: 250,
+                "& .MuiInputBase-root": {
+                  height: 32,
+                },
+                "& .MuiInputBase-input": {
+                  padding: "4px 8px",
+                  fontSize: "0.8rem",
+                },
+              }}
+              onSearch={handleSearch}
+            />
+            <Select
+              value={statusFilter || ""}
+              onChange={(e) => setStatusFilter(e.target.value ? e.target.value : undefined)}
+              displayEmpty
+              size="small"
+              sx={{ height: 32, minWidth: 120, fontSize: "0.8rem" }}
+            >
+              <MenuItem value="">All Statuses</MenuItem>
+              <MenuItem value="Pending">Pending</MenuItem>
+              <MenuItem value="Completed">Completed</MenuItem>
+            </Select>
+          </Box>
 
           <Box
             sx={{
@@ -478,20 +443,32 @@ export default function DashboardPage() {
           </Box>
         </Paper>
 
-        {isLoading && (
-          <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
-            <CircularProgress />
-          </Box>
-        )}
-
         <Box sx={{ flex: 1, maxWidth: "xl", mx: "auto", width: "100%" }}>
           <Box sx={{ height: "70vh", width: "100%" }}>
             <DataGrid
               rows={todos}
+              loading={isLoading}
+              slots={{
+                loadingOverlay: () => (
+                  <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100%" }}>
+                    <ArcStack size={60} />
+                  </Box>
+                )
+              }}
               columns={columns}
               pageSizeOptions={[5, 10, 20]}
               initialState={{
                 pagination: { paginationModel: { pageSize: 5 } },
+              }}
+              sortingMode="server"
+              onSortModelChange={(newSortModel) => {
+                if (newSortModel.length > 0) {
+                  setSortBy(newSortModel[0].field);
+                  setOrder(newSortModel[0].sort === "desc" ? "desc" : "asc");
+                } else {
+                  setSortBy(undefined);
+                  setOrder(undefined);
+                }
               }}
               disableRowSelectionOnClick
               sx={{

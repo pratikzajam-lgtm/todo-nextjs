@@ -27,13 +27,32 @@ type SearchMutationResponse = {
   data: Todo;
 };
 
+type FetchTodosParams = {
+  search?: string;
+  sortBy?: string;
+  order?: "asc" | "desc";
+  status?: string;
+};
+
 type DeleteTodoResponse = {
   success: boolean;
   message: string;
 };
 
-export async function fetchTodos(): Promise<Todo[]> {
-  const { data } = await api.get<TodosListResponse>("/todos");
+export async function fetchTodos(params?: FetchTodosParams): Promise<Todo[]> {
+  const apiParams: Record<string, string | undefined> = {};
+  
+  if (params) {
+    if (params.search !== undefined) apiParams.q = params.search;
+    if (params.status !== undefined) apiParams.status = params.status;
+    if (params.sortBy !== undefined) apiParams.sortBy = params.sortBy;
+    if (params.order !== undefined) apiParams.sortOrder = params.order.toUpperCase();
+  }
+
+  const { data } = await api.get<TodosListResponse>("/todos", {
+    params: apiParams,
+  });
+
   return data.data ?? [];
 }
 
@@ -55,7 +74,4 @@ export async function deleteTodoApi(id: number) {
   return data;
 }
 
-export async function search(query: string) {
-  const { data } = await api.get<SearchMutationResponse>(`/todos/search/${query}`);
-  return data;
-}
+
