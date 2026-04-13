@@ -6,7 +6,7 @@ import { useState } from 'react'
 import { ToastContainer } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 import { ThemeContextProvider, ThemeContext } from "./context/ThemeContext"; 
-import { ThemeProvider } from "@mui/material/styles";
+import { ThemeProvider, CssBaseline } from "@mui/material";
 
 export default function Providers({ children }: { children: ReactNode }) {
  
@@ -18,6 +18,7 @@ export default function Providers({ children }: { children: ReactNode }) {
         <ThemeContext.Consumer>
           {({ theme }) => (
             <ThemeProvider theme={theme}>
+              <CssBaseline />
               <ToastContainer aria-label="Toast notifications" />
               {children}
             </ThemeProvider>

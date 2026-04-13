@@ -14,7 +14,7 @@ import {
   TodoStatus,
 } from "@/app/lib/todos";
 import * as React from "react";
-import { DataGrid } from "@mui/x-data-grid";
+import { DataGrid, GridColDef } from "@mui/x-data-grid";
 import {
   Box,
   Typography,
@@ -22,22 +22,23 @@ import {
   Paper,
   Select,
   MenuItem,
+  IconButton,
+  Tooltip,
 } from "@mui/material";
-import { styled } from "@mui/material/styles";
-
 import { ThemeContext } from "@/app/context/ThemeContext";
 import { AppDrawer } from "../components/drawer";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import AddIcon from "@mui/icons-material/Add";
-import { GridColDef } from "@mui/x-data-grid";
+import LogoutIcon from "@mui/icons-material/Logout";
 import DraggableDialog from "../components/dialog";
 import SearchBar from "../components/Searchbar";
-
 import { MaterialUISwitch } from "../components/switch";
 import ArcStack from "../components/spinner";
 
-const TODOS_QUERY_KEY = ["todos"];function handleApiAuthError(
+const TODOS_QUERY_KEY = ["todos"];
+
+function handleApiAuthError(
   error: unknown,
   router: { replace: (href: string) => void },
 ) {
@@ -105,9 +106,6 @@ export default function DashboardPage() {
     setSearchQuery(query);
   }
 
-
-
-
   useEffect(() => {
     if (!isError || loadTodosError === undefined) return;
     handleApiAuthError(loadTodosError, router);
@@ -131,14 +129,11 @@ export default function DashboardPage() {
       toast.success("Todo updated successfully");
       setIsOpen(false);
       setNewTodoText("");
-      console.log("edit");
       setIsEditing(false);
       setEditingTodoId(null);
     },
     onError: (error) => handleApiAuthError(error, router),
   });
-
-
 
   const changeStatusMutation = useMutation({
     mutationFn: (input: { id: number; status: TodoStatus }) =>
@@ -172,16 +167,14 @@ export default function DashboardPage() {
 
   function isContainSpecialChar(word: string) {
     const charCode = word.charCodeAt(0);
-
     if (
       (charCode >= 33 && charCode <= 47) ||
       (charCode >= 58 && charCode <= 64) ||
       (charCode >= 91 && charCode <= 96) ||
-      (charCode >= 91 && charCode <= 96)
+      (charCode >= 123 && charCode <= 126)
     ) {
       return true;
     }
-
     return false;
   }
 
@@ -240,75 +233,88 @@ export default function DashboardPage() {
   }
 
   function handleaddtodo() {
+    setIsEditing(false);
+    setNewTodoText("");
+    setEditingTodoId(null);
     setIsOpen(true);
   }
 
   if (!token) {
     return (
-      <Box
-        sx={{
-          maxWidth: "sm",
-          mx: "auto",
-          mt: 10,
-          textAlign: "center",
-          color: "text.secondary",
-        }}
-      >
+      <Box sx={{ maxWidth: "sm", mx: "auto", mt: 10, textAlign: "center", color: "text.secondary" }}>
         <Typography>Checking login…</Typography>
       </Box>
     );
   }
 
-  const isSavingTodo =
-    createTodoMutation.isPending || updateTodoTextMutation.isPending;
+  const isSavingTodo = createTodoMutation.isPending || updateTodoTextMutation.isPending;
 
   const columns: GridColDef[] = [
     { field: "id", headerName: "ID", width: 90 },
-    { field: "text", headerName: "TODO", width: 300 },
+    { field: "text", headerName: "Task Description", flex: 1, minWidth: 250 },
     {
       field: "status",
       headerName: "Status",
-      width: 150,
+      width: 160,
       sortable: false,
-      renderCell: (params) => (
-        <Select
-          value={params.row.status}
-          onChange={(e) =>
-            handleStatusSelectChange(
-              e.target.value as TodoStatus,
-              params.row.id,
-            )
-          }
-          size="small"
-          sx={{ minWidth: 120, bgcolor: "background.paper" }}
-        >
-          <MenuItem value="Pending">Pending</MenuItem>
-          <MenuItem value="Completed">Completed</MenuItem>
-        </Select>
-      ),
+      renderCell: (params) => {
+        const isCompleted = params.row.status === "Completed";
+        return (
+          <Select
+            value={params.row.status}
+            onChange={(e) =>
+              handleStatusSelectChange(
+                e.target.value as TodoStatus,
+                params.row.id,
+              )
+            }
+            size="small"
+            sx={{ 
+              minWidth: 120, 
+              bgcolor: isCompleted ? "success.light" : "warning.light",
+              color: isCompleted ? "success.dark" : "warning.dark",
+              fontWeight: 600,
+              fontSize: "0.85rem",
+              borderRadius: "8px",
+              "& .MuiOutlinedInput-notchedOutline": { border: "none" },
+              "&:hover": {
+                bgcolor: isCompleted ? "success.main" : "warning.main",
+                color: "white"
+              }
+            }}
+          >
+            <MenuItem value="Pending">Pending</MenuItem>
+            <MenuItem value="Completed">Completed</MenuItem>
+          </Select>
+        );
+      },
     },
     {
-      field: "edit",
-      headerName: "Edit",
-      width: 80,
+      field: "actions",
+      headerName: "Actions",
+      width: 120,
       sortable: false,
       renderCell: (params) => (
-        <EditIcon
-          onClick={() => startEditingTodo(params.row.id)}
-          className="text-yellow-500 cursor-pointer hover:text-yellow-600"
-        />
-      ),
-    },
-    {
-      field: "delete",
-      headerName: "Delete",
-      width: 80,
-      sortable: false,
-      renderCell: (params) => (
-        <DeleteIcon
-          onClick={() => handleDeleteClick(params.row.id)}
-          className="text-red-500 cursor-pointer hover:text-red-600"
-        />
+        <Box sx={{ display: "flex", gap: 1, alignItems: "center", height: "100%" }}>
+          <Tooltip title="Edit Task">
+            <IconButton
+              size="small"
+              onClick={() => startEditingTodo(params.row.id)}
+              sx={{ color: "primary.main", bgcolor: "primary.light", "&:hover": { bgcolor: "primary.main", color: "white" } }}
+            >
+              <EditIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Delete Task">
+            <IconButton
+              size="small"
+              onClick={() => handleDeleteClick(params.row.id)}
+              sx={{ color: "error.main", bgcolor: "error.light", "&:hover": { bgcolor: "error.main", color: "white" } }}
+            >
+              <DeleteIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+        </Box>
       ),
     },
   ];
@@ -317,85 +323,64 @@ export default function DashboardPage() {
     <>
       <AppDrawer
         open={isOpen}
-        onClose={() => {
-          setIsOpen(false);
-        }}
+        onClose={() => setIsOpen(false)}
         handleFormSubmit={handleFormSubmit}
         setNewTodoText={setNewTodoText}
         todo={newTodoText}
       />
 
-      <>
-        <DraggableDialog
-          open={isModalOpen}
-          title="Confirm Deletion"
-          description="Are you sure you want to delete this todo?"
-          onClose={() => {
-            setModalOpen(false);
-            setDeleteId(null);
-          }}
-          onConfirm={() => {
-            if (DeleteId !== null) {
-              deleteTodoMutation.mutate(DeleteId);
-            }
-          }}
-        />
-      </>
-
-      <Box
-        sx={{
-          display: "flex",
-          flexDirection: "column",
-          minHeight: "100vh",
-          width: "100%",
-          bgcolor: "grey.100",
-          p: 3,
+      <DraggableDialog
+        open={isModalOpen}
+        title="Confirm Deletion"
+        description="Are you sure you want to delete this task? This action cannot be undone."
+        onClose={() => {
+          setModalOpen(false);
+          setDeleteId(null);
         }}
-      >
-        {/* Header */}
+        onConfirm={() => {
+          if (DeleteId !== null) {
+            deleteTodoMutation.mutate(DeleteId);
+          }
+        }}
+      />
 
+      <Box sx={{ display: "flex", flexDirection: "column", width: "100%", gap: 3 }}>
+        {/* Header Section (Glassmorphism) */}
         <Paper
           elevation={0}
           sx={{
-            mb: 3,
             display: "flex",
-            flexDirection: { xs: "column", sm: "row" },
+            flexDirection: { xs: "column", lg: "row" },
             gap: 2,
             borderRadius: 4,
-            border: 1,
-            borderColor: "grey.200",
-            bgcolor: "background.paper",
+            border: "1px solid",
+            borderColor: "divider",
+            bgcolor: isDarkMode ? "rgba(30, 41, 59, 0.6)" : "rgba(255, 255, 255, 0.6)",
+            backdropFilter: "blur(12px)",
             p: 3,
-            alignItems: { xs: "center", sm: "center" },
+            alignItems: { xs: "stretch", lg: "center" },
             justifyContent: "space-between",
           }}
         >
-          <Box sx={{ textAlign: { xs: "center", sm: "left" } }}>
-            <Typography
-              variant="h5"
-              component="h1"
-              fontWeight="bold"
-              color="text.primary"
-            >
-              Todo Application
+          <Box>
+            <Typography variant="h4" component="h1" fontWeight="800" color="text.primary" sx={{ letterSpacing: "-1px" }}>
+              My Tasks
             </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-              Manage your tasks, update status, and add new todos quickly.
+            <Typography variant="body1" color="text.secondary" sx={{ mt: 0.5 }}>
+              Stay organized, focused, and get things done.
             </Typography>
           </Box>
 
           <Box sx={{ display: "flex", gap: 2, alignItems: "center", flexDirection: { xs: "column", sm: "row" } }}>
             <SearchBar
-              placeholder="Search"
+              placeholder="Search tasks..."
               size="small"
               sx={{
-                width: 250,
+                width: { xs: "100%", sm: 280 },
                 "& .MuiInputBase-root": {
-                  height: 32,
-                },
-                "& .MuiInputBase-input": {
-                  padding: "4px 8px",
-                  fontSize: "0.8rem",
+                  height: 40,
+                  borderRadius: 2,
+                  bgcolor: "background.paper",
                 },
               }}
               onSearch={handleSearch}
@@ -405,7 +390,7 @@ export default function DashboardPage() {
               onChange={(e) => setStatusFilter(e.target.value ? e.target.value : undefined)}
               displayEmpty
               size="small"
-              sx={{ height: 32, minWidth: 120, fontSize: "0.8rem" }}
+              sx={{ height: 40, minWidth: 140, borderRadius: 2, bgcolor: "background.paper" }}
             >
               <MenuItem value="">All Statuses</MenuItem>
               <MenuItem value="Pending">Pending</MenuItem>
@@ -416,72 +401,93 @@ export default function DashboardPage() {
           <Box
             sx={{
               display: "flex",
-              flexDirection: { xs: "column", sm: "row" },
-              gap: 1.5,
+              flexDirection: "row",
+              gap: 2,
               alignItems: "center",
+              justifyContent: { xs: "space-between", lg: "flex-start" }
             }}
           >
-            <MaterialUISwitch checked={isDarkMode} onChange={toggleTheme} />
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              <MaterialUISwitch checked={isDarkMode} onChange={toggleTheme} />
+              <Tooltip title="Logout">
+                <IconButton onClick={handleLogoutClick} sx={{ color: "text.secondary" }}>
+                  <LogoutIcon />
+                </IconButton>
+              </Tooltip>
+            </Box>
             <Button
               variant="contained"
               color="primary"
               onClick={handleaddtodo}
               disabled={isSavingTodo}
               startIcon={<AddIcon />}
-              sx={{ borderRadius: 10, px: 3, py: 1 }}
+              sx={{ borderRadius: 2, px: 3, py: 1 }}
             >
-              Add Todo
-            </Button>
-            <Button
-              variant="outlined"
-              color="inherit"
-              onClick={handleLogoutClick}
-              sx={{ borderRadius: 10, px: 3, py: 1, color: "text.secondary" }}
-            >
-              Log out
+              Add Task
             </Button>
           </Box>
         </Paper>
 
-        <Box sx={{ flex: 1, maxWidth: "xl", mx: "auto", width: "100%" }}>
-          <Box sx={{ height: "70vh", width: "100%" }}>
-            <DataGrid
-              rows={todos}
-              loading={isLoading}
-              slots={{
-                loadingOverlay: () => (
-                  <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100%" }}>
-                    <ArcStack size={60} />
-                  </Box>
-                )
-              }}
-              columns={columns}
-              pageSizeOptions={[5, 10, 20]}
-              initialState={{
-                pagination: { paginationModel: { pageSize: 5 } },
-              }}
-              sortingMode="server"
-              onSortModelChange={(newSortModel) => {
-                if (newSortModel.length > 0) {
-                  setSortBy(newSortModel[0].field);
-                  setOrder(newSortModel[0].sort === "desc" ? "desc" : "asc");
-                } else {
-                  setSortBy(undefined);
-                  setOrder(undefined);
-                }
-              }}
-              disableRowSelectionOnClick
-              sx={{
-                borderRadius: 2,
-                border: 1,
-                borderColor: "grey.300",
-                bgcolor: "background.paper",
-                "& .MuiDataGrid-cell": { outline: "none" },
-              }}
-            />
-          </Box>
-        </Box>
+        {/* Data List */}
+        <Paper
+          elevation={0}
+          sx={{
+            height: "65vh",
+            width: "100%",
+            borderRadius: 4,
+            border: "1px solid",
+            borderColor: "divider",
+            bgcolor: "background.paper",
+            overflow: "hidden",
+            boxShadow: "0px 10px 30px rgba(0,0,0,0.03)",
+          }}
+        >
+          <DataGrid
+            rows={todos}
+            loading={isLoading}
+            slots={{
+              loadingOverlay: () => (
+                <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100%" }}>
+                  <ArcStack size={60} />
+                </Box>
+              )
+            }}
+            columns={columns}
+            pageSizeOptions={[5, 10, 20]}
+            initialState={{
+              pagination: { paginationModel: { pageSize: 10 } },
+            }}
+            sortingMode="server"
+            onSortModelChange={(newSortModel) => {
+              if (newSortModel.length > 0) {
+                setSortBy(newSortModel[0].field);
+                setOrder(newSortModel[0].sort === "desc" ? "desc" : "asc");
+              } else {
+                setSortBy(undefined);
+                setOrder(undefined);
+              }
+            }}
+            disableRowSelectionOnClick
+            sx={{
+              border: "none",
+              "& .MuiDataGrid-columnHeaders": {
+                bgcolor: isDarkMode ? "rgba(255,255,255,0.02)" : "rgba(0,0,0,0.02)",
+                borderBottom: "1px solid",
+                borderColor: "divider"
+              },
+              "& .MuiDataGrid-cell": { 
+                borderBottom: "1px solid",
+                borderColor: "divider",
+                outline: "none !important" 
+              },
+              "& .MuiDataGrid-row:hover": {
+                bgcolor: isDarkMode ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.02)",
+              }
+            }}
+          />
+        </Paper>
       </Box>
     </>
   );
 }
+
